@@ -24,20 +24,17 @@ class FileCryptor:
     def encrypt(self, filename):
         with open(filename, 'rb') as file, open(filename + '.enc', 'wb') as enc_file:
             chunk = file.read(self.bits // 8)
-            enc_chunk = self._encrypt_chunk(chunk)
-            enc_file.write(enc_chunk)
             while chunk != b"":
-                chunk = file.read(self.bits // 8)
                 enc_chunk = self._encrypt_chunk(chunk)
                 enc_file.write(enc_chunk)
-
+                chunk = file.read(self.bits // 8)
+                
     def decrypt(self, filename):
         with open(filename, 'rb') as file, open(filename + '.dec', 'wb') as dec_file:
             chunk = file.read(self.bits * 2 // 8)
-            dec_file.write(self._decrypt_chunk(chunk))
             while chunk != b"":
-                chunk = file.read(self.bits * 2 // 8)
                 dec_file.write(self._decrypt_chunk(chunk))
+                chunk = file.read(self.bits * 2 // 8)
 
 
 if __name__ == '__main__': 
