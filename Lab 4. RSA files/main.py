@@ -12,14 +12,16 @@ class FileCryptor:
     def _encrypt_chunk(self, chunk):
         enc = self.rsa.encrypt(int.from_bytes(chunk, "big"))
         to_add = self.bits * 2 - enc.bit_length() 
-        bit_enc = '0' * to_add + str(bin(enc))[2:] 
+        bit_enc = '0' * to_add + str(bin(enc))[2:]
         return self._bitstring_to_bytes(bit_enc)
 
     def _decrypt_chunk(self, chunk):
         dec = self.rsa.decrypt(int.from_bytes(chunk, "big"))
         if dec == 0:
-            return b'\x00'
-        return dec.to_bytes((dec.bit_length() + 7) // 8, 'big')
+            return b'\x00' * (self.bits // 8)
+        to_add = self.bits - dec.bit_length() 
+        bit_dec = '0' * to_add + str(bin(dec))[2:]
+        return self._bitstring_to_bytes(bit_dec)
 
     def encrypt(self, filename):
         with open(filename, 'rb') as file, open(filename + '.enc', 'wb') as enc_file:
@@ -29,8 +31,10 @@ class FileCryptor:
                 enc_file.write(enc_chunk)
                 chunk = file.read(self.bits // 8)
                 
-    def decrypt(self, filename):
-        with open(filename, 'rb') as file, open(filename + '.dec', 'wb') as dec_file:
+    def decrypt(self, enc_filename, dec_filename=None):
+        if dec_filename is None:
+            dec_filename = enc_filename + '.dec'
+        with open(enc_filename, 'rb') as file, open(dec_filename, 'wb') as dec_file:
             chunk = file.read(self.bits * 2 // 8)
             while chunk != b"":
                 dec_file.write(self._decrypt_chunk(chunk))
@@ -38,6 +42,6 @@ class FileCryptor:
 
 
 if __name__ == '__main__': 
-    cryptor = FileCryptor()
+    cryptor = FileCryptor(bits=128)
     cryptor.encrypt('Piet.png')
-    cryptor.decrypt('Piet.png.enc')
+    cryptor.decrypt('Piet.png.enc', 'Piet_dec.png')
